@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { ConnectionRPC } from './rpc/connection/connection.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [ConfigModule.forRoot()],
+  imports: [ConfigModule.forRoot(), ScheduleModule.forRoot()],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ConnectionRPC],
 })
 export class AppModule { }
