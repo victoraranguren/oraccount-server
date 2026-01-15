@@ -1,98 +1,80 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Oraccount Server
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Intro
+Oraccount Server is the backend component for the Oraccount Oracle. It is a NestJS application that acts as an off-chain worker, updating a Solana PDA (Program Derived Address) with a random floating-point number at regular intervals via a Cron job. It also exposes a REST API to query the oracle status and trigger manual updates.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Architecture
 
-## Description
+The server functionality is divided into:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+1.  **Cron Job (`AppService`)**:
+    -   Scheduled to run every 30 seconds (`*/30 * * * * *`).
+    -   Automatically generates a random number and sends a transaction to the Solana network to update the Oracle Account.
 
-## Project setup
+2.  **REST API (`AppController`)**:
+    -   `GET /`: Retrieves the list of Oracle Accounts and their current data.
+    -   `POST /`: Triggers an immediate, manual update of the Oracle Account.
 
-```bash
-$ pnpm install
-```
+3.  **Oracle Service**:
+    -   Handles the interaction with the Solana blockchain using `solana-kite` and `codama-client`.
+    -   Manages wallet loading and transaction signing.
 
-## Compile and run the project
+## Stack
+-   **NestJS**: Main backend framework.
+-   **TypeScript**: Programming language.
+-   **Solana Kite / Codama**: Libraries for interacting with the Solana blockchain and the Anchor program.
 
-```bash
-# development
-$ pnpm run start
+## Requirements
+-   [Node.js](https://nodejs.org/en/download/)
+-   [pnpm](https://pnpm.io/installation)
+-   A Solana Wallet (Keypair) with SOL for transaction fees.
+-   Access to a Solana RPC node (e.g., Surfpool for local development).
 
-# watch mode
-$ pnpm run start:dev
+## Usage
 
-# production mode
-$ pnpm run start:prod
-```
+### 1. Setup and Installation
 
-## Run tests
+Install the project dependencies:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+pnpm install
 ```
 
-## Deployment
+### 2. Configuration
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Ensure you have your Solana wallet configured. The application expects a `WALLET` environment variable containing your **private key** in the form of a JSON array of numbers (e.g., `[1, 2, 3, ...]`).
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+This is the standard format used by the Solana CLI (usually found in `~/.config/solana/id.json`). You can copy the content of that file or use any other private key in this format.
+
+Create a `.env` file (if not present) and configure:
+
+```env
+# Example configuration
+WALLET=[87, 12, 231, ..., 9]
+```
+
+### 3. Running the Server
+
+Start the server in development mode:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+The server will start (typically on port 3000), and you should see logs indicating the Cron job is initializing and running.
 
-## Resources
+### 4. API Interaction
 
-Check out a few resources that may come in handy when working with NestJS:
+You can interact with the server using `curl` or any API client:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+-   **Get Oracle Accounts:**
+    ```bash
+    curl http://localhost:3000/
+    ```
 
-## Support
+-   **Force Oracle Update:**
+    ```bash
+    curl -X POST http://localhost:3000/
+    ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
